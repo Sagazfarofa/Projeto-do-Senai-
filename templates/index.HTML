@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Presença</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            width: 80%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+        }
+
+        .ativo { color: #22c55e; }
+        .bloqueado { color: #ef4444; }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<h1>Controle de Frequência</h1>
+
+<div class="card">
+<h2>Presentes hoje: {{ presentes if presentes else 0 }}</h2>
+</div>
+
+<div class="card">
+<h2>Alunos</h2>
+
+<table>
+<tr>
+<th>Nome</th>
+<th>Status</th>
+<th>Ação</th>
+</tr>
+
+{% if alunos %}
+{% for uid, a in alunos.items() %}
+<tr>
+
+<td>
+{% if a.get("nome", "").startswith("Aluno_") %}
+<form action="/editar/{{ uid }}" method="post">
+    <input name="nome" placeholder="Digite nome" required>
+    <button class="btn">Salvar</button>
+</form>
+{% else %}
+{{ a.get("nome", "Sem nome") }}
+{% endif %}
+</td>
+
+<td>
+{% if a.get("ativo") %}
+<span class="ativo">Ativo</span>
+{% else %}
+<span class="bloqueado">Bloqueado</span>
+{% endif %}
+</td>
+
+<td>
+<a href="/toggle/{{ uid }}" class="btn">Trocar</a>
+</td>
+
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="3">Nenhum aluno</td></tr>
+{% endif %}
+
+</table>
+</div>
+
+<div class="card">
+<h2>Registros</h2>
+
+<table>
+<tr>
+<th>Nome</th>
+<th>Data</th>
+<th>Hora</th>
+</tr>
+
+{% if presencas %}
+{% for p in presencas %}
+<tr>
+<td>{{ p.get("Nome", "-") }}</td>
+<td>{{ p.get("Data", "-") }}</td>
+<td>{{ p.get("Hora", "-") }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="3">Sem registros</td></tr>
+{% endif %}
+
+</table>
+</div>
+
+<div class="card">
+<h2>Frequência</h2>
+
+<table>
+<tr>
+<th>Nome</th>
+<th>%</th>
+</tr>
+
+{% if frequencia %}
+{% for nome, f in frequencia.items() %}
+<tr>
+<td>{{ nome }}</td>
+<td>{{ f }}%</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="2">Sem dados</td></tr>
+{% endif %}
+
+</table>
+</div>
+
+<div class="card">
+<h2>🏆 Ranking</h2>
+
+{% if ranking %}
+{% for nome, f in ranking %}
+<p>{{ loop.index }}º {{ nome }} - {{ f }}%</p>
+{% endfor %}
+{% else %}
+<p>Sem ranking</p>
+{% endif %}
+
+</div>
+
+<div class="card">
+<h2>Gráfico</h2>
+
+{% if frequencia %}
+<canvas id="graficoFreq"></canvas>
+{% else %}
+<p>Sem dados</p>
+{% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    let nomes = [];
+    let valores = [];
+
+    {% if frequencia %}
+    nomes = {{ frequencia.keys() | list | tojson | safe }};
+    valores = {{ frequencia.values() | list | tojson | safe }};
+    {% endif %}
+
+    if (nomes.length > 0) {
+        new Chart(document.getElementById("graficoFreq"), {
+            type: "bar",
+            data: {
+                labels: nomes,
+                datasets: [{
+                    label: "Frequência (%)",
+                    data: valores
+                }]
+            }
+        });
+    }
+
+});
+</script>
+
+</body>
+</html>
