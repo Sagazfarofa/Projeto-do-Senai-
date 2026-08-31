@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import engine, Base, get_db, SessionLocal
-from models import Usuario, Aluno
-from schemas import LoginRequest, AlunoCreate
+from models import Usuario, Aluno, Presenca
+from schemas import LoginRequest, AlunoCreate, PresencaCreate
 
 app = FastAPI(title="SAEP")
 
@@ -148,3 +148,50 @@ def excluir_aluno(
     db.commit()
 
     return {"mensagem": "Aluno removido"}
+
+@app.post("/presencas")
+def registrar_presenca(
+    dados: PresencaCreate,
+    db: Session = Depends(get_db)
+):
+    presenca = Presenca(
+        aluno_id=dados.aluno_id,
+        nome=dados.nome,
+        uid=dados.uid,
+        data=dados.data,
+        hora=dados.hora,
+        tipo=dados.tipo,
+        status=dados.status
+    )
+
+    db.add(presenca)
+    db.commit()
+    db.refresh(presenca)
+
+    return {
+        "mensagem": "Presença registrada",
+        "id": presenca.id
+    }
+
+
+@app.get("/presencas")
+def listar_presencas(
+    db: Session = Depends(get_db)
+):
+    presencas = db.query(Presenca).order_by(
+        Presenca.id.desc()
+    ).all()
+
+    return [
+        {
+            "id": p.id,
+            "aluno_id": p.aluno_id,
+            "nome": p.nome,
+            "uid": p.uid,
+            "data": p.data,
+            "hora": p.hora,
+            "tipo": p.tipo,
+            "status": p.status
+        }
+        for p in presencas
+    ]

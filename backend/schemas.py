@@ -29,5 +29,28 @@ class AlunoResponse(BaseModel):
     uid: str | None = None
     ativo: bool
 
-    class Config:
+class Config:
+        from_attributes = True
+
+class PresencaCreate(BaseModel):
+    aluno_id: int
+    nome: str
+    uid: str
+    data: str
+    hora: str
+    tipo: str
+    status: str
+
+
+class PresencaResponse(BaseModel):
+    id: int
+    aluno_id: int
+    nome: str
+    uid: str
+    data: str
+    hora: str
+    tipo: str
+    status: str
+
+class Config:
         from_attributes = True
